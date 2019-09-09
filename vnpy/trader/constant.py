@@ -108,6 +108,7 @@ class Exchange(Enum):
     TOCOM = "TOCOM"         # Tokyo Commodity Exchange
     EUNX = "EUNX"           # Euronext Exchange
     KRX = "KRX"             # Korean Exchange
+    OANDA = "OANDA"         # OANDA
 
     # CryptoCurrency
     BITMEX = "BITMEX"
