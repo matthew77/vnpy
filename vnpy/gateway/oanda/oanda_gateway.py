@@ -1,3 +1,4 @@
+""" gateway for Oanda """
 from vnpy.trader.gateway import BaseGateway
 from vnpy.api.rest import RestClient, Request
 
@@ -11,16 +12,19 @@ from vnpy.trader.constant import (
     Interval
 )
 
+__author__ = "ZHANG Liang"
+__email__ = "zhangliang@keepswalking.com"
+
 # hostname: api-fxpractice.oanda.com
 # streaming_hostname: stream-fxpractice.oanda.com
 # port: 443
 # ssl: true
-# token:  43ca7cd61a62d347d44a76a84e38baf6-4e2cfe12c132c74e5521dcfeaae762f0
-# username: keepawalkingtest
+# token:  43ca7cd61a62 521dcfeaae762f0
+# username: keepa test
 # datetime_format: RFC3339
 # accounts:
-# - 101-011-2238455-001
-# active_account: 101-011-2238455-001
+# - 101-01 455-001
+# active_account: 101- 55-001
 
 REST_HOST = "https://api-fxtrade.oanda.com"
 STREAMING_HOST = "https://stream-fxtrade.oanda.com"
