@@ -57,6 +57,27 @@ class OandaRestApi(RestClient):
         self.gateway = gateway
         self.gateway_name = gateway.gateway_name
 
+    def sign(self, request):
+        # ??? 将key加入到 request ？？？
+        pass
+
+    def on_failed(self, status_code: int, request: Request):
+        pass
+
+    def on_error(
+            self,
+            exception_type: type,
+            exception_value: Exception,
+            tb,
+            request: Request
+    ):
+        pass
+
+
+
+
+
+
 
 
 # TODO: how to use streaming part ???
