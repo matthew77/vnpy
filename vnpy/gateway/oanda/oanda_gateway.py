@@ -11,6 +11,20 @@ from vnpy.trader.constant import (
     Offset,
     Interval
 )
+from vnpy.trader.object import (
+    TickData,
+    OrderData,
+    TradeData,
+    PositionData,
+    AccountData,
+    ContractData,
+    BarData,
+    OrderRequest,
+    CancelRequest,
+    SubscribeRequest,
+    HistoryRequest
+)
+
 
 __author__ = "ZHANG Liang"
 __email__ = "zhangliang@keepswalking.com"
@@ -38,8 +52,8 @@ class OandaGateway(BaseGateway):
     VN Trader Gateway for Oanda connection
     """
     default_setting = {
-        "ID": "",
-        "Secret": "",
+
+        "API Key": "",
         "会话数": 3,
         "服务器": ["REAL", "PRACTICE"],
         "代理地址": "",
@@ -47,6 +61,58 @@ class OandaGateway(BaseGateway):
     }
 
     exchanges = [Exchange.OANDA]
+
+    def __init__(self, event_engine):
+        """ constructor """
+        super(OandaGateway, self).__init__(event_engine, "OANDA")
+
+        self.rest_api = OandaRestApi(self)
+
+    def connect(self, setting: dict):
+        key = setting["API Key"]
+        # secret = setting["Secret"]
+        session_number = setting["会话数"]
+        server = setting["服务器"]
+        proxy_host = setting["代理地址"]
+        proxy_port = setting["代理端口"]
+
+        if proxy_port.isdigit():
+            proxy_port = int(proxy_port)
+        else:
+            proxy_port = 0
+
+        self.rest_api.connect(key, session_number,
+                              proxy_host, proxy_port)
+
+    def subscribe(self, req: SubscribeRequest):
+        """"""
+        # ??? no web socket, use streaming ???
+        pass
+
+    def send_order(self, req: OrderRequest):
+        """"""
+        pass
+
+    def cancel_order(self, req: CancelRequest):
+        """"""
+        pass
+
+    def query_account(self):
+        """"""
+        pass
+
+    def query_position(self):
+        """"""
+        pass
+
+    def query_history(self, req: HistoryRequest):
+        """"""
+        return self.rest_api.query_history(req)
+
+    def close(self):
+        """"""
+        self.rest_api.stop()
+
 
 
 class OandaRestApi(RestClient):
