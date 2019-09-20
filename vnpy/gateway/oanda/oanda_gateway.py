@@ -25,7 +25,6 @@ from vnpy.trader.object import (
     HistoryRequest
 )
 
-
 __author__ = "ZHANG Liang"
 __email__ = "zhangliang@keepswalking.com"
 
@@ -53,6 +52,7 @@ class OandaGateway(BaseGateway):
     """
     default_setting = {
 
+        "Account ID":"",
         "API Key": "",
         "会话数": 3,
         "服务器": ["REAL", "PRACTICE"],
@@ -69,8 +69,8 @@ class OandaGateway(BaseGateway):
         self.rest_api = OandaRestApi(self)
 
     def connect(self, setting: dict):
+        account_id = setting["Account ID"]
         key = setting["API Key"]
-        # secret = setting["Secret"]
         session_number = setting["会话数"]
         server = setting["服务器"]
         proxy_host = setting["代理地址"]
@@ -81,29 +81,31 @@ class OandaGateway(BaseGateway):
         else:
             proxy_port = 0
 
-        self.rest_api.connect(key, session_number,
-                              proxy_host, proxy_port)
+        self.rest_api.connect(account_id, key, session_number,
+                              server, proxy_host, proxy_port)
 
     def subscribe(self, req: SubscribeRequest):
         """"""
         # ??? no web socket, use streaming ???
-        pass
+        self.rest_api.subscribe(req)
 
     def send_order(self, req: OrderRequest):
         """"""
-        pass
+        return self.rest_api.send_order(req)
 
     def cancel_order(self, req: CancelRequest):
         """"""
-        pass
+        self.rest_api.cancel_order(req)
 
     def query_account(self):
         """"""
-        pass
+        # ??? not sure Oanda has the api
+        self.rest_api.query_account_balance()
 
     def query_position(self):
         """"""
-        pass
+        # ??? not sure Oanda has the api
+        self.rest_api.query_position()
 
     def query_history(self, req: HistoryRequest):
         """"""
@@ -114,18 +116,25 @@ class OandaGateway(BaseGateway):
         self.rest_api.stop()
 
 
-
 class OandaRestApi(RestClient):
     """ Oanda REST API """
+
     def __init__(self, gateway: BaseGateway):
         super().__init__()
 
         self.gateway = gateway
         self.gateway_name = gateway.gateway_name
 
+        self.key = ""
+        self.account_id = ""
+
     def sign(self, request):
-        # ??? 将key加入到 request ？？？
-        pass
+        # for Oanda rest request, just use Bearer token in the HTTP Authorization header
+        headers = {
+            'Authorization': "Bearer {}".format(self.key)
+        }
+        request.headers = headers
+        return request
 
     def on_failed(self, status_code: int, request: Request):
         pass
@@ -139,11 +148,37 @@ class OandaRestApi(RestClient):
     ):
         pass
 
+    def connect(self,
+                account_id: str,
+                key: str,
+                session_number: int,
+                base_url: str,
+                proxy_host: str,
+                proxy_port: int
+                ):
+        self.key = key
+        self.account_id = account_id
+        self.init(base_url, proxy_host, proxy_port)
+        self.start(session_number)
+        self.gateway.write_log("REST API启动成功")
+        self.query_contract()   # instrument
+        self.query_account()
+        self.query_position()
+        self.query_order()
 
+    def query_contract(self):
+        """ oanda instruments """
+        pass
 
+    def query_account(self):
+        pass
 
+    def query_position(self):
+        pass
 
+    def query_order(self):
+        pass
 
-
-
-# TODO: how to use streaming part ???
+    def on_query_contract(self, data, request):
+        """ callback function for query instruments """
+        pass
