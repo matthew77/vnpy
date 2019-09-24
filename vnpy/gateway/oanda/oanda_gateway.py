@@ -168,10 +168,51 @@ class OandaRestApi(RestClient):
 
     def query_contract(self):
         """ oanda instruments """
-        pass
+        self.add_request(
+            "GET",
+            "/v3/accounts/{}/instruments".format(self.account_id),
+            callback=self.on_query_contract
+        )
+
+    def on_query_contract(self, data, request: Request):
+        """ get tradeable instruments from the account  """
+        for d in data["instruments"]:
+            symbol = d["name"]
+
+            if d["type"] == 'CFD' or d["type"] == 'METAL':
+                product = Product.CFD
+            else:
+                product = Product.FOREX
+
+            pip_location = int(d["pipLocation"])    # Oanda use "pipLocation": -4, so will need to convert to decimal.
+
+            contract = ContractData(
+                symbol=symbol,
+                exchange=Exchange.OANDA,
+                name=symbol,
+                product=product,
+                size=1,
+                pricetick=float(10 ** pip_location),
+                gateway_name=self.gateway_name
+            )
+            self.gateway.on_contract(contract)
+
+        self.gateway.write_log("合约信息查询成功")
 
     def query_account(self):
-        pass
+        self.add_request(
+            "GET",
+            "/v3/accounts/{}".format(self.account_id),
+            callback=self.on_query_account
+        )
+
+    def on_query_account(self, data, request):
+        account = AccountData(
+            accountid=self.account_id,
+            balance=float(data["balance"]),
+            gateway_name=self.gateway_name
+        )
+        self.gateway.on_account(account)
 
     def query_position(self):
         pass
