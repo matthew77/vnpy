@@ -230,9 +230,34 @@ class OandaRestApi(RestClient):
             if long_pos["units"] != "0":
                 direction = Direction.LONG
                 volume = int(long_pos["units"])
-
+                avg_price = float(long_pos["averagePrice"])
+                pnl = float(long_pos["pl"]) + float(long_pos["unrealizedPL"])
+                position = PositionData(
+                    symbol=symbol,
+                    exchange=Exchange.OANDA,
+                    direction=direction,
+                    volume=volume,
+                    price=avg_price,
+                    pnl=pnl,
+                    gateway_name=self.gateway_name,
+                )
+                self.gateway.on_position(position)
             short_pos = pos["short"]
-
+            if short_pos["units"] != "0":
+                direction = Direction.SHORT
+                volume = int(long_pos["units"])
+                avg_price = float(long_pos["averagePrice"])
+                pnl = float(long_pos["pl"]) + float(long_pos["unrealizedPL"])
+                position = PositionData(
+                    symbol=symbol,
+                    exchange=Exchange.OANDA,
+                    direction=direction,
+                    volume=volume,
+                    price=avg_price,
+                    pnl=pnl,
+                    gateway_name=self.gateway_name,
+                )
+                self.gateway.on_position(position)
 
     def query_order(self):
         pass
