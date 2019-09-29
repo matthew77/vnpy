@@ -175,7 +175,8 @@ class OandaRestApi(RestClient):
         )
 
     def on_query_contract(self, data, request: Request):
-        """ get tradeable instruments from the account  """
+        """ callback function for query instruments
+            get tradeable instruments from the account  """
         for d in data["instruments"]:
             symbol = d["name"]
 
@@ -215,11 +216,23 @@ class OandaRestApi(RestClient):
         self.gateway.on_account(account)
 
     def query_position(self):
-        pass
+        self.add_request(
+            "GET",
+            "/v3/accounts/{}/openPositions".format(self.account_id),
+            callback=self.on_query_position
+        )
+
+    def on_query_position(self, data, request):
+        positions = data["positions"]
+        for pos in positions:
+            symbol = pos["instrument"]
+            long_pos = pos["long"]
+            if long_pos["units"] != "0":
+                direction = Direction.LONG
+                volume = int(long_pos["units"])
+
+            short_pos = pos["short"]
+
 
     def query_order(self):
-        pass
-
-    def on_query_contract(self, data, request):
-        """ callback function for query instruments """
         pass
