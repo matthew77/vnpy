@@ -169,8 +169,8 @@ class OandaRestApi(RestClient):
     def query_contract(self):
         """ oanda instruments """
         self.add_request(
-            "GET",
-            "/v3/accounts/{}/instruments".format(self.account_id),
+            method="GET",
+            path="/v3/accounts/{}/instruments".format(self.account_id),
             callback=self.on_query_contract
         )
 
@@ -202,8 +202,8 @@ class OandaRestApi(RestClient):
 
     def query_account(self):
         self.add_request(
-            "GET",
-            "/v3/accounts/{}".format(self.account_id),
+            method="GET",
+            path="/v3/accounts/{}".format(self.account_id),
             callback=self.on_query_account
         )
 
@@ -217,8 +217,8 @@ class OandaRestApi(RestClient):
 
     def query_position(self):
         self.add_request(
-            "GET",
-            "/v3/accounts/{}/openPositions".format(self.account_id),
+            method="GET",
+            path="/v3/accounts/{}/openPositions".format(self.account_id),
             callback=self.on_query_position
         )
 
@@ -260,4 +260,11 @@ class OandaRestApi(RestClient):
                 self.gateway.on_position(position)
 
     def query_order(self):
+        self.add_request(
+            method="GET",
+            path="/v3/accounts/{}/orders".format(self.account_id),
+            callback=self.on_query_order
+        )
+
+    def on_query_order(self, data, request):
         pass
