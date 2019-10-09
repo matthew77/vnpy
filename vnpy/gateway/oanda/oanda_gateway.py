@@ -288,9 +288,7 @@ class OandaRestApi(RestClient):
 
     def on_query_order(self, data, request):
         for d in data["orders"]:
-            dt = datetime.fromtimestamp(d["time"] / 1000)
-            time = dt.strftime("%Y-%m-%d %H:%M:%S")
-
+            time = d["createTime"]  # 2019-10-08T07:01:00.735192593Z, maybe it's too long！
             order = OrderData(
                 orderid=d["id"],
                 symbol=d["instrument"],
