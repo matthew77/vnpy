@@ -1,4 +1,6 @@
 """ gateway for Oanda """
+from datetime import datetime
+
 from vnpy.trader.gateway import BaseGateway
 from vnpy.api.rest import RestClient, Request
 
@@ -44,6 +46,24 @@ STREAMING_HOST = "https://stream-fxtrade.oanda.com"
 
 PRACTICE_REST_HOST = "https://api-fxpractice.oanda.com"
 PRACTICE_STREAMING_HOST = "https://stream-fxpractice.oanda.com"
+
+ORDER_TYPE_OANDA_TO_VNPY = {
+    "MARKET": OrderType.MARKET,
+    "FIXED_PRICE": OrderType.LIMIT,
+    "LIMIT": OrderType.LIMIT,
+    "STOP": OrderType.STOP,
+    "MARKET_IF_TOUCHED": OrderType.MARKET,
+    "TAKE_PROFIT": OrderType.LIMIT,
+    "STOP_LOSS": OrderType.STOP,
+    "TRAILING_STOP_LOSS": OrderType.STOP
+}
+
+STATUS_OANDA_TO_VNPY = {
+    "PENDING": Status.SUBMITTING,
+    "FILLED": Status.ALLTRADED,
+    "CANCELLED": Status.CANCELLED,
+    "TRIGGERED": Status.SUBMITTING
+}
 
 
 class OandaGateway(BaseGateway):
@@ -169,8 +189,8 @@ class OandaRestApi(RestClient):
     def query_contract(self):
         """ oanda instruments """
         self.add_request(
-            "GET",
-            "/v3/accounts/{}/instruments".format(self.account_id),
+            method="GET",
+            path="/v3/accounts/{}/instruments".format(self.account_id),
             callback=self.on_query_contract
         )
 
@@ -202,8 +222,8 @@ class OandaRestApi(RestClient):
 
     def query_account(self):
         self.add_request(
-            "GET",
-            "/v3/accounts/{}".format(self.account_id),
+            method="GET",
+            path="/v3/accounts/{}".format(self.account_id),
             callback=self.on_query_account
         )
 
@@ -217,8 +237,8 @@ class OandaRestApi(RestClient):
 
     def query_position(self):
         self.add_request(
-            "GET",
-            "/v3/accounts/{}/openPositions".format(self.account_id),
+            method="GET",
+            path="/v3/accounts/{}/openPositions".format(self.account_id),
             callback=self.on_query_position
         )
 
@@ -260,4 +280,31 @@ class OandaRestApi(RestClient):
                 self.gateway.on_position(position)
 
     def query_order(self):
-        pass
+        self.add_request(
+            method="GET",
+            path="/v3/accounts/{}/orders".format(self.account_id),
+            callback=self.on_query_order
+        )
+
+    def on_query_order(self, data, request):
+        for d in data["orders"]:
+            dt = datetime.fromtimestamp(d["time"] / 1000)
+            time = dt.strftime("%Y-%m-%d %H:%M:%S")
+
+            order = OrderData(
+                orderid=d["id"],
+                symbol=d["instrument"],
+                exchange=Exchange.OANDA,
+                price=float(d["price"]),
+                volume=float(d["units"]),
+                type=ORDER_TYPE_OANDA_TO_VNPY[d["type"]],
+                direction=Direction.LONG if float(d["units"]) > 0 else Direction.SHORT,
+                # traded=float(d["executedQty"]),
+                status=STATUS_OANDA_TO_VNPY.get(d["state"], None),
+                time=time,
+                gateway_name=self.gateway_name,
+            )
+            self.gateway.on_order(order)
+
+        self.gateway.write_log("委托信息查询成功")
+
