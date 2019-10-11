@@ -306,3 +306,94 @@ class OandaRestApi(RestClient):
 
         self.gateway.write_log("委托信息查询成功")
 
+
+class OandaDataRestApi(RestClient):
+    """
+    Oanda Market Data REST API
+    TODO: in Oanda, 2 API have stream feature:
+    TODO: - Transation: https://stream-fxtrade.oanda.com/v3/accounts/<ACCOUNT>/transactions/stream
+    TODO: - price: https://stream-fxtrade.oanda.com/v3/accounts/<ACCOUNT>/pricing/stream?instruments=EUR_USD
+    """
+
+    def __init__(self, gateway: AlpacaGateway):
+        """"""
+        super().__init__()
+
+        self.gateway = gateway
+        self.gateway_name = gateway.gateway_name
+
+        self.key = ""
+        self.secret = ""
+
+        self.symbols = set()
+
+    def sign(self, request):
+        """
+        Generate Alpaca signature.
+        """
+        headers = {
+            "APCA-API-KEY-ID": self.key,
+            "APCA-API-SECRET-KEY": self.secret,
+            "Content-Type": "application/json"
+        }
+
+        request.headers = headers
+        request.allow_redirects = False
+        return request
+
+    def connect(
+        self,
+        key: str,
+        secret: str,
+        session_num: int
+    ):
+        """
+        Initialize connection to REST server.
+        """
+        self.key = key
+        self.secret = secret
+
+        self.init(DATA_REST_HOST)
+        self.start(session_num)
+
+        self.gateway.write_log("行情REST API启动成功")
+
+    def subscribe(self, req: SubscribeRequest):
+        """"""
+        self.symbols.add(req.symbol)
+
+    def query_bar(self):
+        """"""
+        if not self._active or not self.symbols:
+            return
+
+        params = {
+            "symbols": ",".join(list(self.symbols)),
+            "limit": 1
+        }
+
+        self.add_request(
+            method="GET",
+            path="/v1/bars/1Min",
+            params=params,
+            callback=self.on_query_bar
+        )
+
+    def on_query_bar(self, data, request):
+        """"""
+        for symbol, buf in data.items():
+            d = buf[0]
+
+            tick = TickData(
+                symbol=symbol,
+                exchange=Exchange.SMART,
+                datetime=datetime.now(),
+                name=symbol,
+                open_price=d["o"],
+                high_price=d["h"],
+                low_price=d["l"],
+                last_price=d["c"],
+                gateway_name=self.gateway_name
+            )
+
+            self.gateway.on_tick(tick)
